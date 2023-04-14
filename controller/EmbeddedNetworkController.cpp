@@ -500,7 +500,7 @@ EmbeddedNetworkController::EmbeddedNetworkController(Node *node,const char *ztPa
 
 EmbeddedNetworkController::~EmbeddedNetworkController()
 {
-	std::lock_guard<std::mutex> l(_threads_l);
+    zt::lock_guard<zt::mutex> l(_threads_l);
 	_queue.stop();
 	for(auto t=_threads.begin();t!=_threads.end();++t) {
 		t->join();
@@ -577,7 +577,7 @@ void EmbeddedNetworkController::request(
 	const int64_t now = OSUtils::now();
 
 	if (requestPacketId) {
-		std::lock_guard<std::mutex> l(_memberStatus_l);
+        zt::lock_guard<zt::mutex> l(_memberStatus_l);
 		_MemberStatus &ms = _memberStatus[_MemberStatusKey(nwid,identity.address().toInt())];
 		if ((now - ms.lastRequestTime) <= ZT_NETCONF_MIN_REQUEST_PERIOD) {
 			return;
@@ -1173,7 +1173,7 @@ void EmbeddedNetworkController::onNetworkUpdate(const void *db,uint64_t networkI
 {
 	// Send an update to all members of the network that are online
 	const int64_t now = OSUtils::now();
-	std::lock_guard<std::mutex> l(_memberStatus_l);
+    zt::lock_guard<zt::mutex> l(_memberStatus_l);
 	for(auto i=_memberStatus.begin();i!=_memberStatus.end();++i) {
 		if ((i->first.networkId == networkId)&&(i->second.online(now))&&(i->second.lastRequestMetaData))
 			request(networkId,InetAddress(),0,i->second.identity,i->second.lastRequestMetaData);
@@ -1184,7 +1184,7 @@ void EmbeddedNetworkController::onNetworkMemberUpdate(const void *db,uint64_t ne
 {
 	// Push update to member if online
 	try {
-		std::lock_guard<std::mutex> l(_memberStatus_l);
+        zt::lock_guard<zt::mutex> l(_memberStatus_l);
 		_MemberStatus &ms = _memberStatus[_MemberStatusKey(networkId,memberId)];
 		if ((ms.online(OSUtils::now()))&&(ms.lastRequestMetaData))
 			request(networkId,InetAddress(),0,ms.identity,ms.lastRequestMetaData);
@@ -1197,7 +1197,7 @@ void EmbeddedNetworkController::onNetworkMemberDeauthorize(const void *db,uint64
 	Revocation rev((uint32_t)_node->prng(),networkId,0,now,ZT_REVOCATION_FLAG_FAST_PROPAGATE,Address(memberId),Revocation::CREDENTIAL_TYPE_COM);
 	rev.sign(_signingId);
 	{
-		std::lock_guard<std::mutex> l(_memberStatus_l);
+        zt::lock_guard<zt::mutex> l(_memberStatus_l);
 		for(auto i=_memberStatus.begin();i!=_memberStatus.end();++i) {
 			if ((i->first.networkId == networkId)&&(i->second.online(now)))
 				_node->ncSendRevocation(Address(i->first.nodeId),rev);
@@ -1421,7 +1421,7 @@ void EmbeddedNetworkController::_request(
 			member["vProto"] = vProto;
 
 			{
-				std::lock_guard<std::mutex> l(_memberStatus_l);
+                zt::lock_guard<zt::mutex> l(_memberStatus_l);
 				_MemberStatus &ms = _memberStatus[msk];
 				ms.authenticationExpiryTime = authenticationExpiryTime;
 				ms.vMajor = (int)vMajor;
@@ -1433,7 +1433,7 @@ void EmbeddedNetworkController::_request(
 			}
 
 			if (authenticationExpiryTime > 0) {
-				std::lock_guard<std::mutex> l(_expiringSoon_l);
+                zt::lock_guard<zt::mutex> l(_expiringSoon_l);
 				_expiringSoon.insert(std::pair<int64_t, _MemberStatusKey>(authenticationExpiryTime, msk));
 			}
 		}
@@ -1908,7 +1908,7 @@ void EmbeddedNetworkController::_request(
 
 void EmbeddedNetworkController::_startThreads()
 {
-	std::lock_guard<std::mutex> l(_threads_l);
+    zt::lock_guard<zt::mutex> l(_threads_l);
 	if (!_threads.empty()) {
 		return;
 	}
@@ -1947,7 +1947,7 @@ void EmbeddedNetworkController::_ssoExpiryThread() {
 		nlohmann::json network, member;
 		int64_t now = OSUtils::now();
 		{
-			std::lock_guard<std::mutex> l(_expiringSoon_l);
+            zt::lock_guard<zt::mutex> l(_expiringSoon_l);
 			for(auto s=_expiringSoon.begin();s!=_expiringSoon.end();) {
 				Metrics::sso_expiration_checks++;
 				const int64_t when = s->first;

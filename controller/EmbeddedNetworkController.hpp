@@ -66,7 +66,7 @@ public:
 		const InetAddress &fromAddr,
 		uint64_t requestPacketId,
 		const Identity &identity,
-		const Dictionary<ZT_NETWORKCONFIG_METADATA_DICT_CAPACITY> &metaData);
+		const Dictionary<ZT_NETWORKCONFIG_METADATA_DICT_CAPACITY> &metaData) REQUIRES(!_memberStatus_l) REQUIRES(!_threads_l);
 
 	void configureHTTPControlPlane(
 		httplib::Server &s,
@@ -74,14 +74,14 @@ public:
 
 	void handleRemoteTrace(const ZT_RemoteTrace &rt);
 
-	virtual void onNetworkUpdate(const void *db,uint64_t networkId,const nlohmann::json &network);
-	virtual void onNetworkMemberUpdate(const void *db,uint64_t networkId,uint64_t memberId,const nlohmann::json &member);
-	virtual void onNetworkMemberDeauthorize(const void *db,uint64_t networkId,uint64_t memberId);
+	virtual void onNetworkUpdate(const void *db,uint64_t networkId,const nlohmann::json &network) REQUIRES(!_memberStatus_l) REQUIRES(!_threads_l);
+	virtual void onNetworkMemberUpdate(const void *db,uint64_t networkId,uint64_t memberId,const nlohmann::json &member) REQUIRES(!_memberStatus_l) REQUIRES(!_threads_l);
+	virtual void onNetworkMemberDeauthorize(const void *db,uint64_t networkId,uint64_t memberId) REQUIRES(!_memberStatus_l);
 
 private:
-	void _request(uint64_t nwid,const InetAddress &fromAddr,uint64_t requestPacketId,const Identity &identity,const Dictionary<ZT_NETWORKCONFIG_METADATA_DICT_CAPACITY> &metaData);
-	void _startThreads();
-	void _ssoExpiryThread();
+	void _request(uint64_t nwid,const InetAddress &fromAddr,uint64_t requestPacketId,const Identity &identity,const Dictionary<ZT_NETWORKCONFIG_METADATA_DICT_CAPACITY> &metaData) REQUIRES(!_memberStatus_l) REQUIRES(!_expiringSoon_l);
+	void _startThreads() REQUIRES(!_threads_l) REQUIRES(_queue.m);
+	void _ssoExpiryThread() REQUIRES(!_expiringSoon_l) REQUIRES(!_memberStatus_l);
 
 	std::string networkUpdateFromPostData(uint64_t networkID, const std::string &body);
 
@@ -136,17 +136,17 @@ private:
 	DBMirrorSet _db;
 	BlockingQueue< _RQEntry * > _queue;
 
-	std::vector<std::thread> _threads;
-	std::mutex _threads_l;
+	std::vector<std::thread> _threads GUARDED_BY(_threads_l);
+	zt::mutex _threads_l;
 
 	bool _ssoExpiryRunning;
 	std::thread _ssoExpiry;
 
-	std::unordered_map< _MemberStatusKey,_MemberStatus,_MemberStatusHash > _memberStatus;
-	std::mutex _memberStatus_l;
+	std::unordered_map< _MemberStatusKey,_MemberStatus,_MemberStatusHash > _memberStatus GUARDED_BY(_memberStatus_l);
+	zt::mutex _memberStatus_l;
 
-	std::set< std::pair<int64_t, _MemberStatusKey> > _expiringSoon;
-	std::mutex _expiringSoon_l;
+	std::set< std::pair<int64_t, _MemberStatusKey> > _expiringSoon GUARDED_BY(_expiringSoon_l);
+	zt::mutex _expiringSoon_l;
 
 	RedisConfig *_rc;
 	std::string _ssoRedirectURL;

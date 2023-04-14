@@ -936,7 +936,7 @@ public:
 		delete _rc;
 	}
 
-	virtual ReasonForTermination run()
+	virtual ReasonForTermination run() REQUIRES(!_termReason_m) REQUIRES(!_run_m) REQUIRES(!_tcpConnections_m) REQUIRES(!_localConfig_m) REQUIRES(!_nets_m)
 	{
 		try {
 			{
@@ -1253,7 +1253,7 @@ public:
 		return _termReason;
 	}
 
-	void readLocalSettings()
+	void readLocalSettings() REQUIRES(!_localConfig_m)
 	{
 		// Read local configuration
 		std::map<InetAddress,ZT_PhysicalPathConfiguration> ppc;
@@ -1365,19 +1365,19 @@ public:
 		}
 	}
 
-	virtual ReasonForTermination reasonForTermination() const
+	virtual ReasonForTermination reasonForTermination() const REQUIRES(!_termReason_m)
 	{
 		Mutex::Lock _l(_termReason_m);
 		return _termReason;
 	}
 
-	virtual std::string fatalErrorMessage() const
+	virtual std::string fatalErrorMessage() const REQUIRES(!_termReason_m)
 	{
 		Mutex::Lock _l(_termReason_m);
 		return _fatalErrorMessage;
 	}
 
-	virtual std::string portDeviceName(uint64_t nwid) const
+	virtual std::string portDeviceName(uint64_t nwid) const REQUIRES(!_nets_m)
 	{
 		Mutex::Lock _l(_nets_m);
 		std::map<uint64_t,NetworkState>::const_iterator n(_nets.find(nwid));
@@ -1409,7 +1409,7 @@ public:
 	}
 #endif // ZT_SDK
 
-	virtual void terminate()
+	virtual void terminate() REQUIRES(!_run_m)
 	{
 		_run_m.lock();
 
@@ -1418,7 +1418,7 @@ public:
 		_phy.whack();
 	}
 
-	virtual bool getNetworkSettings(const uint64_t nwid,NetworkSettings &settings) const
+	virtual bool getNetworkSettings(const uint64_t nwid,NetworkSettings &settings) const REQUIRES(!_nets_m)
 	{
 		Mutex::Lock _l(_nets_m);
 		std::map<uint64_t,NetworkState>::const_iterator n(_nets.find(nwid));
@@ -2015,7 +2015,7 @@ public:
     }
 
 	// Must be called after _localConfig is read or modified
-	void applyLocalConfig()
+	void applyLocalConfig() REQUIRES(!_localConfig_m)
 	{
 		Mutex::Lock _l(_localConfig_m);
 		json lc(_localConfig);
@@ -2523,8 +2523,7 @@ public:
 	// Handlers for Node and Phy<> callbacks
 	// =========================================================================
 
-	inline void phyOnDatagram(PhySocket *sock,void **uptr,const struct sockaddr *localAddr,const struct sockaddr *from,void *data,unsigned long len)
-	{
+	inline void phyOnDatagram(PhySocket *sock,void **uptr,const struct sockaddr *localAddr,const struct sockaddr *from,void *data,unsigned long len) REQUIRES(!_termReason_m) REQUIRES(!_run_m) {
 		if (_forceTcpRelay) {
 			return;
 		}
@@ -2544,8 +2543,7 @@ public:
 		}
 	}
 
-	inline void phyOnTcpConnect(PhySocket *sock,void **uptr,bool success)
-	{
+	inline void phyOnTcpConnect(PhySocket *sock,void **uptr,bool success) REQUIRES(!_tcpConnections_m) {
 		if (!success) {
 			phyOnTcpClose(sock,uptr);
 			return;
@@ -2568,8 +2566,7 @@ public:
 		}
 	}
 
-	inline void phyOnTcpAccept(PhySocket *sockL,PhySocket *sockN,void **uptrL,void **uptrN,const struct sockaddr *from)
-	{
+	inline void phyOnTcpAccept(PhySocket *sockL,PhySocket *sockN,void **uptrL,void **uptrN,const struct sockaddr *from) REQUIRES(!_tcpConnections_m) {
 		if (!from) {
 			_phy.close(sockN,false);
 			return;
@@ -2600,8 +2597,7 @@ public:
 		}
 	}
 
-	void phyOnTcpClose(PhySocket *sock,void **uptr)
-	{
+	void phyOnTcpClose(PhySocket *sock,void **uptr) REQUIRES(!_tcpConnections_m) {
 		TcpConnection *tc = (TcpConnection *)*uptr;
 		if (tc) {
 			if (tc == _tcpFallbackTunnel) {
@@ -2615,8 +2611,7 @@ public:
 		}
 	}
 
-	void phyOnTcpData(PhySocket *sock,void **uptr,void *data,unsigned long len)
-	{
+	void phyOnTcpData(PhySocket *sock,void **uptr,void *data,unsigned long len) REQUIRES(!_termReason_m) REQUIRES(!_run_m) {
 		try {
 			if (!len) return; // sanity check, should never happen
             Metrics::tcp_recv += len;
@@ -2785,8 +2780,7 @@ public:
 	inline void phyOnUnixData(PhySocket *sock,void **uptr,void *data,unsigned long len) {}
 	inline void phyOnUnixWritable(PhySocket *sock,void **uptr) {}
 
-	inline int nodeVirtualNetworkConfigFunction(uint64_t nwid,void **nuptr,enum ZT_VirtualNetworkConfigOperation op,const ZT_VirtualNetworkConfig *nwc)
-	{
+	inline int nodeVirtualNetworkConfigFunction(uint64_t nwid,void **nuptr,enum ZT_VirtualNetworkConfigOperation op,const ZT_VirtualNetworkConfig *nwc) REQUIRES(!_nets_m) {
 		Mutex::Lock _l(_nets_m);
 		NetworkState &n = _nets[nwid];
 		n.setWebPort(_primaryPort);
@@ -2912,8 +2906,7 @@ public:
 		return 0;
 	}
 
-	inline void nodeEventCallback(enum ZT_Event event,const void *metaData)
-	{
+	inline void nodeEventCallback(enum ZT_Event event,const void *metaData) REQUIRES(!_termReason_m) REQUIRES(!_run_m) {
 		switch(event) {
 			case ZT_EVENT_FATAL_ERROR_IDENTITY_COLLISION: {
 				Mutex::Lock _l(_termReason_m);
@@ -3230,8 +3223,7 @@ public:
 		return -1;
 	}
 
-	inline int nodeWirePacketSendFunction(const int64_t localSocket,const struct sockaddr_storage *addr,const void *data,unsigned int len,unsigned int ttl)
-	{
+	inline int nodeWirePacketSendFunction(const int64_t localSocket,const struct sockaddr_storage *addr,const void *data,unsigned int len,unsigned int ttl) REQUIRES(!_tcpConnections_m) {
 #ifdef ZT_TCP_FALLBACK_RELAY
 		if(_allowTcpFallbackRelay) {
 			if (addr->ss_family == AF_INET) {
@@ -3319,8 +3311,7 @@ public:
 		n->tap()->put(MAC(sourceMac),MAC(destMac),etherType,data,len);
 	}
 
-	inline int nodePathCheckFunction(uint64_t ztaddr,const int64_t localSocket,const struct sockaddr_storage *remoteAddr)
-	{
+	inline int nodePathCheckFunction(uint64_t ztaddr,const int64_t localSocket,const struct sockaddr_storage *remoteAddr) REQUIRES(!_nets_m) REQUIRES(!_localConfig_m) {
 		// Make sure we're not trying to do ZeroTier-over-ZeroTier
 		{
 			Mutex::Lock _l(_nets_m);
@@ -3399,8 +3390,7 @@ public:
 		_phy.close(tc->sock);
 	}
 
-	bool shouldBindInterface(const char* ifname, const InetAddress& ifaddr)
-	{
+	bool shouldBindInterface(const char* ifname, const InetAddress& ifaddr) REQUIRES(!_nets_m) REQUIRES(!_localConfig_m) {
 #if defined(__linux__) || defined(linux) || defined(__LINUX__) || defined(__linux)
 		if ((ifname[0] == 'l') && (ifname[1] == 'o')) return false; // loopback
 		if ((ifname[0] == 'z') && (ifname[1] == 't')) return false; // sanity check: zt#

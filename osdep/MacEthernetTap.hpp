@@ -48,14 +48,14 @@ public:
 
 	virtual void setEnabled(bool en);
 	virtual bool enabled() const;
-	virtual bool addIp(const InetAddress &ip);
-	virtual bool removeIp(const InetAddress &ip);
+	virtual bool addIp(const InetAddress &ip) REQUIRES(!_putLock);
+	virtual bool removeIp(const InetAddress &ip) REQUIRES(!_putLock);
 	virtual std::vector<InetAddress> ips() const;
-	virtual void put(const MAC &from,const MAC &to,unsigned int etherType,const void *data,unsigned int len);
+	virtual void put(const MAC &from,const MAC &to,unsigned int etherType,const void *data,unsigned int len) REQUIRES(!_putLock);
 	virtual std::string deviceName() const;
 	virtual void setFriendlyName(const char *friendlyName);
 	virtual void scanMulticastGroups(std::vector<MulticastGroup> &added,std::vector<MulticastGroup> &removed);
-	virtual void setMtu(unsigned int mtu);
+	virtual void setMtu(unsigned int mtu) REQUIRES(!_putLock);
 	virtual void setDns(const char *domain, const std::vector<InetAddress> &servers);
 
 	void threadMain()

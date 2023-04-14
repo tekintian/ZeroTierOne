@@ -37,6 +37,8 @@
 
 #include <prometheus/simpleapi.h>
 
+#include "../node/b_mutex.h"
+
 #define ZT_MEMBER_AUTH_TIMEOUT_NOTIFY_BEFORE 25000
 
 namespace ZeroTier
@@ -107,24 +109,23 @@ public:
 	virtual bool waitForReady() = 0;
 	virtual bool isReady() = 0;
 
-	inline bool hasNetwork(const uint64_t networkId) const
+	inline bool hasNetwork(const uint64_t networkId) const REQUIRES(!_networks_l)
 	{
-		std::shared_lock<std::shared_mutex> l(_networks_l);
+		zt::shared_lock<zt::shared_mutex> l(_networks_l);
 		return (_networks.find(networkId) != _networks.end());
 	}
 
-	bool get(const uint64_t networkId,nlohmann::json &network);
-	bool get(const uint64_t networkId,nlohmann::json &network,const uint64_t memberId,nlohmann::json &member);
-	bool get(const uint64_t networkId,nlohmann::json &network,const uint64_t memberId,nlohmann::json &member,NetworkSummaryInfo &info);
-	bool get(const uint64_t networkId,nlohmann::json &network,std::vector<nlohmann::json> &members);
+	bool get(const uint64_t networkId,nlohmann::json &network) REQUIRES(!_networks_l);
+	bool get(const uint64_t networkId,nlohmann::json &network,const uint64_t memberId,nlohmann::json &member) REQUIRES(!_networks_l);
+	bool get(const uint64_t networkId,nlohmann::json &network,const uint64_t memberId,nlohmann::json &member,NetworkSummaryInfo &info) REQUIRES(!_networks_l);
+	bool get(const uint64_t networkId,nlohmann::json &network,std::vector<nlohmann::json> &members) REQUIRES(!_networks_l);
 
-	void networks(std::set<uint64_t> &networks);
+	void networks(std::set<uint64_t> &networks) REQUIRES(!_networks_l);
 
 	template<typename F>
-	inline void each(F f)
-	{
+    inline void each(F f) REQUIRES(!_networks_l) {
 		nlohmann::json nullJson;
-		std::unique_lock<std::shared_mutex> lck(_networks_l);
+		zt::unique_lock<zt::shared_mutex> lck(_networks_l);
 		for(auto nw=_networks.begin();nw!=_networks.end();++nw) {
 			f(nw->first,nw->second->config,0,nullJson); // first provide network with 0 for member ID
 			for(auto m=nw->second->members.begin();m!=nw->second->members.end();++m) {
@@ -140,9 +141,8 @@ public:
 
 	virtual AuthInfo getSSOAuthInfo(const nlohmann::json &member, const std::string &redirectURL) { return AuthInfo(); }
 
-	inline void addListener(DB::ChangeListener *const listener)
-	{
-		std::unique_lock<std::shared_mutex> l(_changeListeners_l);
+    inline void addListener(DB::ChangeListener *const listener) REQUIRES(!_changeListeners_l) {
+		zt::unique_lock<zt::shared_mutex> l(_changeListeners_l);
 		_changeListeners.push_back(listener);
 	}
 
@@ -181,15 +181,15 @@ protected:
 		std::shared_mutex lock;
 	};
 
-	virtual void _memberChanged(nlohmann::json &old,nlohmann::json &memberConfig,bool notifyListeners);
-	virtual void _networkChanged(nlohmann::json &old,nlohmann::json &networkConfig,bool notifyListeners);
+	virtual void _memberChanged(nlohmann::json &old,nlohmann::json &memberConfig,bool notifyListeners) REQUIRES(!_changeListeners_l) REQUIRES(!_networks_l);
+    virtual void _networkChanged(nlohmann::json &old,nlohmann::json &networkConfig,bool notifyListeners) REQUIRES(!_networks_l) REQUIRES(!_changeListeners_l);
 	void _fillSummaryInfo(const std::shared_ptr<_Network> &nw,NetworkSummaryInfo &info);
 
-	std::vector<DB::ChangeListener *> _changeListeners;
-	std::unordered_map< uint64_t,std::shared_ptr<_Network> > _networks;
-	std::unordered_multimap< uint64_t,uint64_t > _networkByMember;
-	mutable std::shared_mutex _changeListeners_l;
-	mutable std::shared_mutex _networks_l;
+    std::vector<DB::ChangeListener *> _changeListeners GUARDED_BY(_changeListeners_l);
+	std::unordered_map< uint64_t,std::shared_ptr<_Network> > _networks GUARDED_BY(_networks_l);
+    std::unordered_multimap< uint64_t,uint64_t > _networkByMember GUARDED_BY(_networks_l);
+	mutable zt::shared_mutex _changeListeners_l;
+	mutable zt::shared_mutex _networks_l;
 };
 
 } // namespace ZeroTier

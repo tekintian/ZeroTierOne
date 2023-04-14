@@ -139,7 +139,7 @@ void FileDB::eraseNetwork(const uint64_t networkId)
 	OSUtils::ztsnprintf(p,sizeof(p),"%s" ZT_PATH_SEPARATOR_S "%.16llx" ZT_PATH_SEPARATOR_S "member",_networksPath.c_str(),(unsigned long long)networkId);
 	OSUtils::rmDashRf(p);
 	_networkChanged(network,nullJson,true);
-	std::lock_guard<std::mutex> l(this->_online_l);
+	zt::lock_guard<zt::mutex> l(_online_l);
 	this->_online.erase(networkId);
 }
 
@@ -151,7 +151,7 @@ void FileDB::eraseMember(const uint64_t networkId,const uint64_t memberId)
 	OSUtils::ztsnprintf(p,sizeof(p),"%s" ZT_PATH_SEPARATOR_S "%.16llx" ZT_PATH_SEPARATOR_S "member" ZT_PATH_SEPARATOR_S "%.10llx.json",_networksPath.c_str(),networkId,memberId);
 	OSUtils::rm(p);
 	_memberChanged(member,nullJson,true);
-	std::lock_guard<std::mutex> l(this->_online_l);
+	zt::lock_guard<zt::mutex> l(_online_l);
 	this->_online[networkId].erase(memberId);
 }
 
@@ -160,7 +160,7 @@ void FileDB::nodeIsOnline(const uint64_t networkId,const uint64_t memberId,const
 	char mid[32],atmp[64];
 	OSUtils::ztsnprintf(mid,sizeof(mid),"%.10llx",(unsigned long long)memberId);
 	physicalAddress.toString(atmp);
-	std::lock_guard<std::mutex> l(this->_online_l);
+    zt::lock_guard<zt::mutex> l(_online_l);
 	this->_online[networkId][memberId][OSUtils::now()] = physicalAddress;
 }
 

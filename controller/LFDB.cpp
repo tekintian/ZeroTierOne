@@ -52,7 +52,7 @@ LFDB::LFDB(const Identity &myId,const char *path,const char *lfOwnerPrivate,cons
 		int64_t timeRangeStart = 0;
 		while (_running.load()) {
 			{
-				std::lock_guard<std::mutex> sl(_state_l);
+                zt::lock_guard<zt::mutex> sl(_state_l);
 				for(auto ns=_state.begin();ns!=_state.end();++ns) {
 					if (ns->second.dirty) {
 						nlohmann::json network;
@@ -352,7 +352,7 @@ bool LFDB::save(nlohmann::json &record,bool notifyListeners)
 				record["revision"] = OSUtils::jsonInt(record["revision"],0ULL) + 1ULL;
 				_networkChanged(old,record,notifyListeners);
 				{
-					std::lock_guard<std::mutex> l(_state_l);
+                    zt::lock_guard<zt::mutex> l(_state_l);
 					_state[nwid].dirty = true;
 				}
 				modified = true;
@@ -368,7 +368,7 @@ bool LFDB::save(nlohmann::json &record,bool notifyListeners)
 				record["revision"] = OSUtils::jsonInt(record["revision"],0ULL) + 1ULL;
 				_memberChanged(old,record,notifyListeners);
 				{
-					std::lock_guard<std::mutex> l(_state_l);
+                    zt::lock_guard<zt::mutex> l(_state_l);
 					_state[nwid].members[id].dirty = true;
 				}
 				modified = true;
@@ -390,7 +390,7 @@ void LFDB::eraseMember(const uint64_t networkId,const uint64_t memberId)
 
 void LFDB::nodeIsOnline(const uint64_t networkId,const uint64_t memberId,const InetAddress &physicalAddress)
 {
-	std::lock_guard<std::mutex> l(_state_l);
+    zt::lock_guard<zt::mutex> l(_state_l);
 	auto nw = _state.find(networkId);
 	if (nw != _state.end()) {
 		auto m = nw->second.members.find(memberId);

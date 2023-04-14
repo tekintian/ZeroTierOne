@@ -126,8 +126,8 @@ protected:
 	}
 
 private:
-	void initializeNetworks();
-	void initializeMembers();
+	void initializeNetworks() REQUIRES(_readyLock);
+	void initializeMembers() REQUIRES(_readyLock);
 	void heartbeat();
 	void membersDbWatcher();
 	void _membersWatcher_Postgres();
@@ -164,10 +164,10 @@ private:
 	std::thread _commitThread[ZT_CENTRAL_CONTROLLER_COMMIT_THREADS];
 	std::thread _onlineNotificationThread;
 
-	std::unordered_map< std::pair<uint64_t,uint64_t>,std::pair<int64_t,InetAddress>,_PairHasher > _lastOnline;
+	std::unordered_map< std::pair<uint64_t,uint64_t>,std::pair<int64_t,InetAddress>,_PairHasher > _lastOnline GUARDED_BY(_lastOnline_l);
 
-	mutable std::mutex _lastOnline_l;
-	mutable std::mutex _readyLock;
+	mutable zt::mutex _lastOnline_l;
+	mutable zt::mutex _readyLock;
 	std::atomic<int> _ready, _connected, _run;
 	mutable volatile bool _waitNoticePrinted;
 

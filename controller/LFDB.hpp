@@ -43,10 +43,10 @@ public:
 
 	virtual bool waitForReady();
 	virtual bool isReady();
-	virtual bool save(nlohmann::json &record,bool notifyListeners);
+	virtual bool save(nlohmann::json &record,bool notifyListeners) REQUIRES(!_state_l);
 	virtual void eraseNetwork(const uint64_t networkId);
 	virtual void eraseMember(const uint64_t networkId,const uint64_t memberId);
-	virtual void nodeIsOnline(const uint64_t networkId,const uint64_t memberId,const InetAddress &physicalAddress);
+	virtual void nodeIsOnline(const uint64_t networkId,const uint64_t memberId,const InetAddress &physicalAddress) REQUIRES(!_state_l);
 
 protected:
 	const Identity _myId;
@@ -75,8 +75,9 @@ protected:
 		std::unordered_map<uint64_t,_MemberState> members;
 		bool dirty;
 	};
-	std::unordered_map<uint64_t,_NetworkState> _state;
+	std::unordered_map<uint64_t,_NetworkState> _state GUARDED_BY(_state_l);
 	std::mutex _state_l;
+    zt::mutex _state_l;
 
 	std::atomic_bool _running;
 	std::atomic_bool _ready;

@@ -21,6 +21,8 @@
 #include <atomic>
 #include <vector>
 
+#include "../node/b_mutex.h"
+
 namespace ZeroTier {
 
 /**
@@ -34,16 +36,16 @@ class BlockingQueue
 public:
 	BlockingQueue(void) : r(true) {}
 
-	inline void post(T t)
+	inline void post(T t) REQUIRES(!m)
 	{
-		std::lock_guard<std::mutex> lock(m);
+		zt::lock_guard<zt::mutex> lock(m);
 		q.push(t);
 		c.notify_one();
 	}
 
 	inline void postLimit(T t,const unsigned long limit)
-	{
-		std::unique_lock<std::mutex> lock(m);
+	{   
+		zt::unique_lock<zt::mutex> lock(m);
 		for(;;) {
 			if (q.size() < limit) {
 				q.push(t);
@@ -56,9 +58,9 @@ public:
 		}
 	}
 
-	inline void stop(void)
+	inline void stop(void) REQUIRES(!m)
 	{
-		std::lock_guard<std::mutex> lock(m);
+		zt::lock_guard<zt::mutex> lock(m);
 		r = false;
 		c.notify_all();
 		gc.notify_all();
@@ -66,7 +68,7 @@ public:
 
 	inline bool get(T &value)
 	{
-		std::unique_lock<std::mutex> lock(m);
+		zt::unique_lock<zt::mutex> lock(m);
 		if (!r)
 			return false;
 		while (q.empty()) {
@@ -99,32 +101,35 @@ public:
 		STOP
 	};
 
-	inline TimedWaitResult get(T &value,const unsigned long ms)
-	{
+	inline TimedWaitResult get(T &value,const unsigned long ms) REQUIRES(!m) {
 		const std::chrono::milliseconds ms2{ms};
-		std::unique_lock<std::mutex> lock(m);
+		zt::unique_lock<zt::mutex> lock(m);
 		if (!r)
 			return STOP;
 		while (q.empty()) {
-			if (c.wait_for(lock,ms2) == std::cv_status::timeout)
-				return ((r) ? TIMED_OUT : STOP);
-			else if (!r)
-				return STOP;
+//			if (c.wait_for(lock,ms2) == std::cv_status::timeout)
+//				return ((r) ? TIMED_OUT : STOP);
+//			else if (!r)
+//				return STOP;
+            return STOP;
 		}
 		value = q.front();
 		q.pop();
 		return OK;
 	}
 
-	inline size_t size() const {
+	inline size_t size() const REQUIRES(m) {
 		return q.size();
 	}
 
 private:
-	std::queue<T> q;
-	mutable std::mutex m;
-	mutable std::condition_variable c,gc;
-	std::atomic_bool r;
+	std::queue<T> q GUARDED_BY(m);
+//	mutable zt::mutex m;
+	mutable std::condition_variable c GUARDED_BY(m);
+	mutable std::condition_variable gc GUARDED_BY(m);
+	std::atomic_bool r GUARDED_BY(m);
+public:
+    mutable zt::mutex m;
 };
 
 } // namespace ZeroTier

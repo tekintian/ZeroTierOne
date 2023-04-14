@@ -364,7 +364,7 @@ void PostgreSQL::eraseMember(const uint64_t networkId, const uint64_t memberId)
 
 void PostgreSQL::nodeIsOnline(const uint64_t networkId, const uint64_t memberId, const InetAddress &physicalAddress)
 {
-	std::lock_guard<std::mutex> l(_lastOnline_l);
+	zt::lock_guard<std::mutex> l(_lastOnline_l);
 	std::pair<int64_t, InetAddress> &i = _lastOnline[std::pair<uint64_t,uint64_t>(networkId, memberId)];
 	i.first = OSUtils::now();
 	if (physicalAddress) {
@@ -787,7 +787,7 @@ void PostgreSQL::initializeMembers()
 
 		if (_redisMemberStatus) {
 			fprintf(stderr, "Initialize Redis for members...\n");
-			std::unique_lock<std::shared_mutex> l(_networks_l);
+			zt::unique_lock<std::shared_mutex> l(_networks_l);
 			std::unordered_set<std::string> deletes;
 			for ( auto it : _networks) {
 				uint64_t nwid_i = it.first;
@@ -1644,7 +1644,7 @@ void PostgreSQL::onlineNotification_Postgres()
 			fprintf(stderr, "%s onlineNotification_Postgres\n", _myAddressStr.c_str());
 			std::unordered_map< std::pair<uint64_t,uint64_t>,std::pair<int64_t,InetAddress>,_PairHasher > lastOnline;
 			{
-				std::lock_guard<std::mutex> l(_lastOnline_l);
+				zt::lock_guard<std::mutex> l(_lastOnline_l);
 				lastOnline.swap(_lastOnline);
 			}
 
@@ -1742,7 +1742,7 @@ void PostgreSQL::onlineNotification_Redis()
 
 		std::unordered_map< std::pair<uint64_t,uint64_t>,std::pair<int64_t,InetAddress>,_PairHasher > lastOnline;
 		{
-			std::lock_guard<std::mutex> l(_lastOnline_l);
+			zt::lock_guard<std::mutex> l(_lastOnline_l);
 			lastOnline.swap(_lastOnline);
 		}
 		try {
@@ -1823,7 +1823,7 @@ uint64_t PostgreSQL::_doRedisUpdate(sw::redis::Transaction &tx, std::string &con
 						sw::redis::RightBoundedInterval<double>(expireOld,
 																sw::redis::BoundType::LEFT_OPEN));
 	{
-		std::shared_lock<std::shared_mutex> l(_networks_l);
+		zt::shared_lock<std::shared_mutex> l(_networks_l);
 		for (const auto &it : _networks) {
 			uint64_t nwid_i = it.first;
 			char nwidTmp[64];

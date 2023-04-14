@@ -30,33 +30,32 @@ public:
 	DBMirrorSet(DB::ChangeListener *listener);
 	virtual ~DBMirrorSet();
 
-	bool hasNetwork(const uint64_t networkId) const;
+	bool hasNetwork(const uint64_t networkId) const REQUIRES(!_dbs_l);
 
-	bool get(const uint64_t networkId,nlohmann::json &network);
-	bool get(const uint64_t networkId,nlohmann::json &network,const uint64_t memberId,nlohmann::json &member);
-	bool get(const uint64_t networkId,nlohmann::json &network,const uint64_t memberId,nlohmann::json &member,DB::NetworkSummaryInfo &info);
-	bool get(const uint64_t networkId,nlohmann::json &network,std::vector<nlohmann::json> &members);
+	bool get(const uint64_t networkId,nlohmann::json &network) REQUIRES(!_dbs_l);
+	bool get(const uint64_t networkId,nlohmann::json &network,const uint64_t memberId,nlohmann::json &member) REQUIRES(!_dbs_l);
+	bool get(const uint64_t networkId,nlohmann::json &network,const uint64_t memberId,nlohmann::json &member,DB::NetworkSummaryInfo &info) REQUIRES(!_dbs_l);
+	bool get(const uint64_t networkId,nlohmann::json &network,std::vector<nlohmann::json> &members) REQUIRES(!_dbs_l);
 
-	void networks(std::set<uint64_t> &networks);
+	void networks(std::set<uint64_t> &networks) REQUIRES(!_dbs_l);
 
-	bool waitForReady();
-	bool isReady();
-	bool save(nlohmann::json &record,bool notifyListeners);
-	void eraseNetwork(const uint64_t networkId);
-	void eraseMember(const uint64_t networkId,const uint64_t memberId);
-	void nodeIsOnline(const uint64_t networkId,const uint64_t memberId,const InetAddress &physicalAddress);
+	bool waitForReady() REQUIRES(!_dbs_l);
+	bool isReady() REQUIRES(!_dbs_l);
+	bool save(nlohmann::json &record,bool notifyListeners) REQUIRES(!_dbs_l);
+	void eraseNetwork(const uint64_t networkId) REQUIRES(!_dbs_l);
+	void eraseMember(const uint64_t networkId,const uint64_t memberId) REQUIRES(!_dbs_l);
+	void nodeIsOnline(const uint64_t networkId,const uint64_t memberId,const InetAddress &physicalAddress) REQUIRES(!_dbs_l);
 
 	// These are called by various DB instances when changes occur.
-	virtual void onNetworkUpdate(const void *db,uint64_t networkId,const nlohmann::json &network);
-	virtual void onNetworkMemberUpdate(const void *db,uint64_t networkId,uint64_t memberId,const nlohmann::json &member);
+	virtual void onNetworkUpdate(const void *db,uint64_t networkId,const nlohmann::json &network) REQUIRES(!_dbs_l);
+	virtual void onNetworkMemberUpdate(const void *db,uint64_t networkId,uint64_t memberId,const nlohmann::json &member) REQUIRES(!_dbs_l);
 	virtual void onNetworkMemberDeauthorize(const void *db,uint64_t networkId,uint64_t memberId);
 
-	AuthInfo getSSOAuthInfo(const nlohmann::json &member, const std::string &redirectURL);
+	AuthInfo getSSOAuthInfo(const nlohmann::json &member, const std::string &redirectURL) REQUIRES(!_dbs_l);
 
-	inline void addDB(const std::shared_ptr<DB> &db)
-	{
+	inline void addDB(const std::shared_ptr<DB> &db) REQUIRES(!_dbs_l) {
 		db->addListener(this);
-		std::unique_lock<std::shared_mutex> l(_dbs_l);
+		zt::unique_lock<zt::shared_mutex> l(_dbs_l);
 		_dbs.push_back(db);
 	}
 
@@ -64,8 +63,8 @@ private:
 	DB::ChangeListener *const _listener;
 	std::atomic_bool _running;
 	std::thread _syncCheckerThread;
-	std::vector< std::shared_ptr< DB > > _dbs;
-	mutable std::shared_mutex _dbs_l;
+	std::vector< std::shared_ptr< DB > > _dbs GUARDED_BY(_dbs_l);
+	mutable zt::shared_mutex _dbs_l;
 };
 
 } // namespace ZeroTier

@@ -335,7 +335,7 @@ void Peer::introduce(void *const tPtr,const int64_t now,const SharedPtr<Peer> &o
 			break;
 		}
 	}
-
+    
 	Mutex::Lock _l2(other->_paths_m);
 
 	for(unsigned int i=0;i<ZT_MAX_PEER_NETWORK_PATHS;++i) {

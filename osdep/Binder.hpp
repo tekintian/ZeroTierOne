@@ -106,8 +106,7 @@ class Binder {
 	 *
 	 * @param phy Physical interface
 	 */
-	template <typename PHY_HANDLER_TYPE> void closeAll(Phy<PHY_HANDLER_TYPE>& phy)
-	{
+	template <typename PHY_HANDLER_TYPE> void closeAll(Phy<PHY_HANDLER_TYPE>& phy) REQUIRES(!_lock) {
 		Mutex::Lock _l(_lock);
 		for (unsigned int b = 0, c = _bindingCount; b < c; ++b) {
 			phy.close(_bindings[b].udpSock, false);
@@ -130,8 +129,7 @@ class Binder {
 	 * @tparam PHY_HANDLER_TYPE Type for Phy<> template
 	 * @tparam INTERFACE_CHECKER Type for class containing shouldBindInterface() method
 	 */
-	template <typename PHY_HANDLER_TYPE, typename INTERFACE_CHECKER> void refresh(Phy<PHY_HANDLER_TYPE>& phy, unsigned int* ports, unsigned int portCount, const std::vector<InetAddress> explicitBind, INTERFACE_CHECKER& ifChecker)
-	{
+	template <typename PHY_HANDLER_TYPE, typename INTERFACE_CHECKER> void refresh(Phy<PHY_HANDLER_TYPE>& phy, unsigned int* ports, unsigned int portCount, const std::vector<InetAddress> explicitBind, INTERFACE_CHECKER& ifChecker) REQUIRES(!_lock) {
 		std::map<InetAddress, std::string> localIfAddrs;
 		PhySocket *udps, *tcps;
 		Mutex::Lock _l(_lock);
@@ -471,7 +469,7 @@ class Binder {
 	/**
 	 * @return All currently bound local interface addresses
 	 */
-	inline std::vector<InetAddress> allBoundLocalInterfaceAddresses() const
+	inline std::vector<InetAddress> allBoundLocalInterfaceAddresses() const REQUIRES(!_lock)
 	{
 		std::vector<InetAddress> aa;
 		Mutex::Lock _l(_lock);
@@ -483,7 +481,7 @@ class Binder {
 	/**
 	 * Send from all bound UDP sockets
 	 */
-	template <typename PHY_HANDLER_TYPE> inline bool udpSendAll(Phy<PHY_HANDLER_TYPE>& phy, const struct sockaddr_storage* addr, const void* data, unsigned int len, unsigned int ttl)
+	template <typename PHY_HANDLER_TYPE> inline bool udpSendAll(Phy<PHY_HANDLER_TYPE>& phy, const struct sockaddr_storage* addr, const void* data, unsigned int len, unsigned int ttl) REQUIRES(!_lock)
 	{
 		bool r = false;
 		Mutex::Lock _l(_lock);
@@ -502,7 +500,7 @@ class Binder {
 	 * @param addr Address to check
 	 * @return True if this is a bound local interface address
 	 */
-	inline bool isBoundLocalInterfaceAddress(const InetAddress& addr) const
+	inline bool isBoundLocalInterfaceAddress(const InetAddress& addr) const REQUIRES(!_lock)
 	{
 		Mutex::Lock _l(_lock);
 		for (unsigned int b = 0; b < _bindingCount; ++b) {
@@ -532,7 +530,7 @@ class Binder {
 	 * @param nameBuf Buffer to store name of interface which this Socket object is bound to
 	 * @param buflen Length of buffer to copy name into
 	 */
-	void getIfName(PhySocket* s, char* nameBuf, int buflen) const
+	void getIfName(PhySocket* s, char* nameBuf, int buflen) const REQUIRES(!_lock)
 	{
 		Mutex::Lock _l(_lock);
 		for (unsigned int b = 0, c = _bindingCount; b < c; ++b) {

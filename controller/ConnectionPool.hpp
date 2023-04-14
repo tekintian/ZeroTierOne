@@ -70,7 +70,7 @@ public:
     };
 
     ConnectionPoolStats get_stats() {
-        std::unique_lock<std::mutex> lock(m_poolMutex);
+        zt::unique_lock<zt::mutex> lock(m_poolMutex);
 
         ConnectionPoolStats stats;
         stats.pool_size = m_pool.size();
@@ -91,7 +91,7 @@ public:
      * @retval a shared_ptr to the connection object
      */
     std::shared_ptr<T> borrow() {
-        std::unique_lock<std::mutex> l(m_poolMutex);
+        zt::unique_lock<zt::mutex> l(m_poolMutex);
         
         while((m_pool.size() + m_borrowed.size()) < m_minPoolSize) {
             std::shared_ptr<Connection> conn = m_factory->create();
@@ -153,7 +153,7 @@ public:
      */
     void unborrow(std::shared_ptr<T> conn) {
         // Lock
-        std::unique_lock<std::mutex> lock(m_poolMutex);
+        zt::unique_lock<zt::mutex> lock(m_poolMutex);
         m_borrowed.erase(conn);
         Metrics::pool_in_use--;
         if ((m_pool.size() + m_borrowed.size()) < m_maxPoolSize) {
@@ -165,9 +165,9 @@ protected:
     size_t m_maxPoolSize;
     size_t m_minPoolSize;
     std::shared_ptr<ConnectionFactory> m_factory;
-    std::deque<std::shared_ptr<Connection> > m_pool;
+    std::deque<std::shared_ptr<Connection> > m_pool GUARDED_BY(m_poolMutex);
     std::set<std::shared_ptr<Connection> > m_borrowed;
-    std::mutex m_poolMutex;
+    zt::mutex m_poolMutex;
 };
 
 }

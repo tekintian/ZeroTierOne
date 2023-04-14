@@ -128,12 +128,12 @@ LinuxEthernetTap::LinuxEthernetTap(
 	_enabled(true),
 	_run(true)
 {
-	static std::mutex s_tapCreateLock;
+	static zt::mutex s_tapCreateLock;
 	char procpath[128],nwids[32];
 	struct stat sbuf;
 
 	// Create only one tap at a time globally.
-	std::lock_guard<std::mutex> tapCreateLock(s_tapCreateLock);
+	zt::lock_guard<zt::mutex> tapCreateLock(s_tapCreateLock);
 
 	// Make sure Linux netlink is initialized.
 	(void)LinuxNetLink::getInstance();

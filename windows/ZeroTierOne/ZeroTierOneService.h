@@ -29,7 +29,7 @@
 //#define ZT_DEBUG_SERVICE "C:\\ZeroTierOneServiceDebugLog.txt"
 
 #ifdef ZT_DEBUG_SERVICE
-extern FILE *SVCDBGfile;
+extern FILE *SVCDBGfile GUARDED_BY(SVCDBGfile_m);
 extern ZeroTier::Mutex SVCDBGfile_m;
 #define ZT_SVCDBG(f,...) { SVCDBGfile_m.lock(); fprintf(SVCDBGfile,f,##__VA_ARGS__); fflush(SVCDBGfile); SVCDBGfile_m.unlock(); }
 #else
@@ -63,7 +63,7 @@ protected:
 
 private:
 	std::string _path;
-	ZeroTier::OneService *volatile _service;
+	ZeroTier::OneService *volatile _service GUARDED_BY(_lock);
 	ZeroTier::Mutex _lock;
 	ZeroTier::Thread _thread;
 };

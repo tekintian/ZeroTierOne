@@ -1933,7 +1933,7 @@ public:
 			_controller->configureHTTPControlPlane(_controlPlane, setContent);
 		}
 
-		_controlPlane.set_pre_routing_handler([=](const httplib::Request &req, httplib::Response &res) {
+		_controlPlane.set_pre_routing_handler([&](const httplib::Request &req, httplib::Response &res) {
             std::string r = req.remote_addr;
             InetAddress remoteAddr(r.c_str());
 

@@ -1465,60 +1465,6 @@ public:
 			}
 		};
 
-
-        auto authCheck = [=] (const httplib::Request &req, httplib::Response &res) {
-            std::string r = req.remote_addr;
-            InetAddress remoteAddr(r.c_str());
-
-            bool ipAllowed = false;
-            bool isAuth = false;
-            // If localhost, allow
-            if (remoteAddr.ipScope() == InetAddress::IP_SCOPE_LOOPBACK) {
-                ipAllowed = true;
-            }
-
-            if (!ipAllowed) {
-                for (auto i = _allowManagementFrom.begin(); i != _allowManagementFrom.end(); ++i) {
-                    if (i->containsAddress(remoteAddr)) {
-                        ipAllowed  = true;
-                        break;
-                    }
-                }
-            }
-
-
-            if (ipAllowed) {
-                // auto-pass endpoints in `noAuthEndpoints`.  No auth token required
-                if (std::find(noAuthEndpoints.begin(), noAuthEndpoints.end(), req.path) != noAuthEndpoints.end()) {
-                    isAuth = true;
-                }
-
-                if (!isAuth) {
-                    // check auth token
-                    if (req.has_header("x-zt1-auth")) {
-                        std::string token = req.get_header_value("x-zt1-auth");
-                        if (token == _authToken) {
-                            isAuth = true;
-                        }
-                    } else if (req.has_param("auth")) {
-                        std::string token = req.get_param_value("auth");
-                        if (token == _authToken) {
-                            isAuth = true;
-                        }
-                    }
-                }
-            }
-
-            if (ipAllowed && isAuth) {
-                return httplib::Server::HandlerResponse::Unhandled;
-            }
-			setContent(req, res, "{}");
-            res.status = 401;
-            return httplib::Server::HandlerResponse::Handled;
-        };
-
-
-
 		_controlPlane.Get("/bond/show/([0-9a-fA-F]{10})", [&](const httplib::Request &req, httplib::Response &res) {
 			if (!_node->bondController()->inUse()) {
 				setContent(req, res, "");
@@ -1987,7 +1933,56 @@ public:
 			_controller->configureHTTPControlPlane(_controlPlane, setContent);
 		}
 
-		_controlPlane.set_pre_routing_handler(authCheck);
+		_controlPlane.set_pre_routing_handler([=](const httplib::Request &req, httplib::Response &res) {
+            std::string r = req.remote_addr;
+            InetAddress remoteAddr(r.c_str());
+
+            bool ipAllowed = false;
+            bool isAuth = false;
+            // If localhost, allow
+            if (remoteAddr.ipScope() == InetAddress::IP_SCOPE_LOOPBACK) {
+                ipAllowed = true;
+            }
+
+            if (!ipAllowed) {
+                for (auto i = _allowManagementFrom.begin(); i != _allowManagementFrom.end(); ++i) {
+                    if (i->containsAddress(remoteAddr)) {
+                        ipAllowed  = true;
+                        break;
+                    }
+                }
+            }
+
+
+            if (ipAllowed) {
+                // auto-pass endpoints in `noAuthEndpoints`.  No auth token required
+                if (std::find(noAuthEndpoints.begin(), noAuthEndpoints.end(), req.path) != noAuthEndpoints.end()) {
+                    isAuth = true;
+                }
+
+                if (!isAuth) {
+                    // check auth token
+                    if (req.has_header("x-zt1-auth")) {
+                        std::string token = req.get_header_value("x-zt1-auth");
+                        if (token == _authToken) {
+                            isAuth = true;
+                        }
+                    } else if (req.has_param("auth")) {
+                        std::string token = req.get_param_value("auth");
+                        if (token == _authToken) {
+                            isAuth = true;
+                        }
+                    }
+                }
+            }
+
+            if (ipAllowed && isAuth) {
+                return httplib::Server::HandlerResponse::Unhandled;
+            }
+			setContent(req, res, "{}");
+            res.status = 401;
+            return httplib::Server::HandlerResponse::Handled;
+        });
 
 #if ZT_DEBUG==1
 		_controlPlane.set_logger([](const httplib::Request &req, const httplib::Response &res) {

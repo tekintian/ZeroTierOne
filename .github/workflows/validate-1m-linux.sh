@@ -20,8 +20,8 @@ mkdir $TEST_DIR_PREFIX
 NS1="ip netns exec ns1"
 NS2="ip netns exec ns2"
 
-ZT1="$NS1 ./zerotier-cli -D$(pwd)/node1"
-ZT2="$NS2 ./zerotier-cli -D$(pwd)/node2"
+ZT1="$NS1 sudo ./zerotier-cli -D/tmp/node1"
+ZT2="$NS2 sudo ./zerotier-cli -D/tmp/node2"
 
 echo -e "Setting up network namespaces..."
 echo "Setting up ns1"
@@ -66,23 +66,23 @@ sysctl -w net.ipv4.ip_forward=1
 
 echo -e "\nPing from host to namespaces"
 
-#ping -c 4 192.168.0.1
-#ping -c 4 192.168.1.1
+ping -c 4 192.168.0.1
+ping -c 4 192.168.1.1
 
 echo -e "\nPing from namespace to host"
 
-#$NS1 ping -c 4 192.168.0.1
-#$NS1 ping -c 4 192.168.0.1
-#$NS2 ping -c 4 192.168.0.2
-#$NS2 ping -c 4 192.168.0.2
+$NS1 ping -c 4 192.168.0.1
+$NS1 ping -c 4 192.168.0.1
+$NS2 ping -c 4 192.168.0.2
+$NS2 ping -c 4 192.168.0.2
 
 echo -e "\nPing from ns1 to ns2"
 
-#$NS1 ping -c 4 192.168.0.1
+$NS1 ping -c 4 192.168.0.1
 
 echo -e "\nPing from ns2 to ns1"
 
-#$NS2 ping -c 4 192.168.0.1
+$NS2 ping -c 4 192.168.0.1
 
 ################################################################################
 # Memory Leak Check                                                            #
@@ -100,10 +100,10 @@ $NS1 sudo valgrind --demangle=yes --exit-on-first-error=yes \
       --xml=yes \
       --xml-file=$FILENAME_MEMORY_LOG \
       --leak-check=full \
-      ./zerotier-one node1 >>node_1.log 2>&1 &
+      ./zerotier-one /tmp/node1 >>node_1.log 2>&1 &
 
 # Second instance, not run in memory profiler
-$NS2 ./zerotier-one node2 >>node_2.log 2>&1 &
+$NS2 sudo ./zerotier-one /tmp/node2 >>node_2.log 2>&1 &
 
 ################################################################################
 # Online Check                                                                 #

@@ -203,8 +203,15 @@ std::string ssoResponseTemplate = R"""(
 
 class http_error : public std::exception {
 public:
-	char * what() {
+	const char * what() {
 		return "http error in name lookup";
+	}
+};
+
+class http_404 : public std::exception {
+public:
+	const char * what() {
+		return "network not found";
 	}
 };
 
@@ -1750,22 +1757,35 @@ public:
 				
 			char url[2048];
 			OSUtils::ztsnprintf(url, sizeof(url), "/api/v1/network/name/%s", in_name.c_str());
-			httplib::Client client("http://localtest.zerotier.com:8000");
+			httplib::Client client(_networkNameLookupHost);
 		
 			auto r = client.Get(url);
 			if (r) {
 				auto value = r.value();
-				auto body = OSUtils::jsonParse(value.body);
-				std::string networkID = body["id"];
-				std::string name = body["name"];
-				if (name != in_name) {
-					throw std::runtime_error("name mismatch error");
+				if (value.status == 200) {
+					std::string networkID; 
+					std::string name;
+					try {
+						auto body = OSUtils::jsonParse(value.body);
+						networkID = body["id"];
+						name = body["name"];
+					} catch (std::exception &e) {
+						std::cout << "json error: " << e.what() << std::endl << "body: " << value.body << std::endl;
+						throw http_error();
+					}
+					if (name != in_name) {
+						throw std::runtime_error("name mismatch error");
+					}
+					std::cout << std::endl << "Received:" << std::endl
+						<< "Network ID: " << networkID << std::endl
+						<< "Network Name: " << name << std::endl << std::endl;
+					
+					return networkID;
+				} else if (value.status == 404 ) {
+					throw http_404();
+				} else{
+					throw http_error();
 				}
-				std::cout << std::endl << "Received:" << std::endl
-					<< "Network ID: " << networkID << std::endl
-					<< "Network Name: " << name << std::endl << std::endl;
-				
-				return networkID;
 			} else {
 				std::cout << r.error() << std::endl;
 				throw http_error();
@@ -1785,6 +1805,10 @@ public:
 				} catch (http_error &e) {
 					res.status = 500;
 					setContent(req, res, "{}");
+					return;
+				} catch (http_404 &e) {
+					res.status = 404;
+					setContent(req, res, "{\"error\": \"not found\"}");
 					return;
 				} catch (std::runtime_error &e) {
 					res.status = 400;

@@ -808,10 +808,6 @@ static int cli(int argc,char **argv)
 			return 1;
 		}
 	} else if (command == "join") {
-		if (arg1.length() != 16) {
-			printf("invalid network id" ZT_EOL_S);
-			return 2;
-		}
 		requestHeaders["Content-Type"] = "application/json";
 		requestHeaders["Content-Length"] = "2";
 		unsigned int scode = Http::POST(

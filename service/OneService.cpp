@@ -201,6 +201,13 @@ std::string ssoResponseTemplate = R"""(
 </html>
 )""";
 
+class http_error : public std::exception {
+public:
+	char * what() {
+		return "http error in name lookup";
+	}
+};
+
 #if ZT_DEBUG==1
 std::string dump_headers(const httplib::Headers &headers) {
   std::string s;
@@ -1728,9 +1735,54 @@ public:
 			res.status = 404;
         });
 
+		auto networkLookup = [&](const std::string in_name) -> std::string {
+			std::cout << "not a network ID, trying remote lookup of %s" << std::endl;
+				
+			char url[2048];
+			OSUtils::ztsnprintf(url, sizeof(url), "/api/v1/network/name/%s", in_name.c_str());
+			httplib::Client client("http://localtest.zerotier.com:8000");
+		
+			auto r = client.Get(url);
+			if (r) {
+				auto value = r.value();
+				auto body = OSUtils::jsonParse(value.body);
+				std::string networkID = body["id"];
+				std::string name = body["name"];
+				if (name != in_name) {
+					throw std::runtime_error("name mismatch error");
+				}
+				std::cout << std::endl << "Received:" << std::endl
+					<< "Network ID: " << networkID << std::endl
+					<< "Network Name: " << name << std::endl << std::endl;
+				
+				return networkID;
+			} else {
+				std::cout << r.error() << std::endl;
+				throw http_error();
+			}
+			return "";
+		};
+
 		auto networkPost = [&](const httplib::Request &req, httplib::Response &res) {
 			auto input = req.matches[1];
 			uint64_t wantnw = Utils::hexStrToU64(input.str().c_str());
+
+			if (wantnw == 0) {
+				// hexStrToU64 failed.  Try a remote lookup
+				try {
+					std::string networkID = networkLookup(input.str());
+					wantnw = Utils::hexStrToU64(networkID.c_str());
+				} catch (http_error &e) {
+					res.status = 500;
+					setContent(req, res, "{}");
+					return;
+				} catch (std::runtime_error &e) {
+					res.status = 400;
+					setContent(req, res, "{}");
+					return;
+				}
+			}
+
 			_node->join(wantnw, (void*)0, (void*)0);
 			auto out = json::object();
 			Mutex::Lock l(_nets_m);
@@ -1767,8 +1819,8 @@ public:
 			}
 			setContent(req, res, out.dump());
 		};
-		_controlPlane.Post("/network/([0-9a-fA-F]{16})", networkPost);
-		_controlPlane.Put("/network/([0-9a-fA-F]){16}", networkPost);
+		_controlPlane.Post("/network/([0-9a-zA-Z\\-_.]+)", networkPost);
+		_controlPlane.Put("/network/([0-9a-zA-Z\\-_.]+)", networkPost);
 
 		_controlPlane.Delete("/network/([0-9a-fA-F]{16})", [&](const httplib::Request &req, httplib::Response &res) {
 			auto input = req.matches[1];

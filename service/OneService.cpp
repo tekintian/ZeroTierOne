@@ -772,6 +772,7 @@ public:
 	std::string _controllerDbPath;
 	const std::string _networksPath;
 	const std::string _moonsPath;
+	std::string _networkNameLookupHost;
 
 	EmbeddedNetworkController *_controller;
 	Phy<OneServiceImpl *> _phy;
@@ -875,6 +876,7 @@ public:
 		,_controllerDbPath(_homePath + ZT_PATH_SEPARATOR_S "controller.d")
 		,_networksPath(_homePath + ZT_PATH_SEPARATOR_S "networks.d")
 		,_moonsPath(_homePath + ZT_PATH_SEPARATOR_S "moons.d")
+		,_networkNameLookupHost("https://api.zerotier.com")
 		,_controller((EmbeddedNetworkController *)0)
 		,_phy(this,false,true)
 		,_node((Node *)0)
@@ -1334,11 +1336,19 @@ public:
 		if (settings.is_object()) {
 			// Allow controller DB path to be put somewhere else
 			const std::string cdbp(OSUtils::jsonString(settings["controllerDbPath"],""));
-			if (cdbp.length() > 0)
+			if (cdbp.length() > 0) {
 				_controllerDbPath = cdbp;
+			}
 
 			_ssoRedirectURL = OSUtils::jsonString(settings["ssoRedirectURL"], "");
 
+			const std::string nameLookupHost(
+				OSUtils::jsonString(
+					settings["networkNameLookupHost"],""));
+			if (!nameLookupHost.empty()) {
+				_networkNameLookupHost = nameLookupHost;
+			}
+			
 #ifdef ZT_CONTROLLER_USE_LIBPQ
 			// TODO:  Redis config
 			json &redis = settings["redis"];

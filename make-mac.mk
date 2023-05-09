@@ -2,9 +2,9 @@ CC=clang
 CXX=clang++
 TOPDIR=$(shell PWD)
 
-INCLUDES=-I$(shell PWD)/zeroidc/target -isystem $(TOPDIR)/ext  -I$(TOPDIR)/ext/prometheus-cpp-lite-1.0/core/include -I$(TOPDIR)/ext-prometheus-cpp-lite-1.0/3rdparty/http-client-lite/include -I$(TOPDIR)/ext/prometheus-cpp-lite-1.0/simpleapi/include -I$(TOPDIR)/ext/openssl-3.1.0-mac/include
+INCLUDES=-I$(shell PWD)/zeroidc/target -isystem $(TOPDIR)/ext  -I$(TOPDIR)/ext/prometheus-cpp-lite-1.0/core/include -I$(TOPDIR)/ext-prometheus-cpp-lite-1.0/3rdparty/http-client-lite/include -I$(TOPDIR)/ext/prometheus-cpp-lite-1.0/simpleapi/include -I$(TOPDIR)/ext/openssl-3.1.0/include
 DEFS=-DCPPHTTPLIB_OPENSSL_SUPPORT -DCPPHTTPLIB_USE_CERTS_FROM_MACOSX_KEYCHAIN
-LIBS=$(TOPDIR)/ext/openssl-3.1.0-mac/lib/libcrypto.a $(TOPDIR)/ext/openssl-3.1.0-mac/lib/libssl.a
+LIBS=$(TOPDIR)/ext/openssl-3.1.0/lib/libcrypto.a $(TOPDIR)/ext/openssl-3.1.0/lib/libssl.a
 ARCH_FLAGS=-arch x86_64 -arch arm64 
 
 CODESIGN=echo

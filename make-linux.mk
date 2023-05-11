@@ -11,7 +11,7 @@ endif
 
 INCLUDES?=-Izeroidc/target -isystem ext -Iext/prometheus-cpp-lite-1.0/core/include -Iext-prometheus-cpp-lite-1.0/3rdparty/http-client-lite/include -Iext/prometheus-cpp-lite-1.0/simpleapi/include
 DEFS?=-DCPPHTTPLIB_OPENSSL_SUPPORT
-LDLIBS?=
+LDLIBS?=-lcrypto -lssl
 DESTDIR?=
 
 include objects.mk

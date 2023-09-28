@@ -2,27 +2,27 @@
 clone:
   depth: 1
 kind: pipeline
-name: bullseye 386 build
+name: buster 386 build
 platform:
   os: linux
 pull: always
 steps:
 - commands:
-  - ./ci/scripts/build.sh bullseye debian 386 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/build.sh buster debian 386 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: build
   when:
     event:
     - push
 - commands:
-  - ./ci/scripts/build.sh bullseye debian 386 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/build.sh buster debian 386 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: release
   when:
     event:
     - tag
 - commands:
-  - ./ci/scripts/publish.sh bullseye debian 386 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/publish.sh buster debian 386 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: copy build
   volumes:
@@ -32,7 +32,7 @@ steps:
     event:
     - push
 - commands:
-  - ./ci/scripts/publish.sh bullseye debian 386 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/publish.sh buster debian 386 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: copy relase
   volumes:
@@ -58,29 +58,28 @@ volumes:
 clone:
   depth: 1
 kind: pipeline
-name: bullseye armv7 build
+name: buster armv7 build
 platform:
   arch: arm64
   os: linux
 pull: always
 steps:
 - commands:
-  - ./ci/scripts/build.sh bullseye debian armv7 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/build.sh buster debian armv7 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: build
   when:
     event:
     - push
 - commands:
-  - ./ci/scripts/build.sh bullseye debian armv7 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/build.sh buster debian armv7 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: release
   when:
     event:
     - tag
 - commands:
-  - ./ci/scripts/publish.sh bullseye debian armv7 100.0.0+${DRONE_COMMIT_SHA:0:8}
-    ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/publish.sh buster debian armv7 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: copy build
   volumes:
@@ -90,7 +89,7 @@ steps:
     event:
     - push
 - commands:
-  - ./ci/scripts/publish.sh bullseye debian armv7 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/publish.sh buster debian armv7 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: copy relase
   volumes:
@@ -116,28 +115,27 @@ volumes:
 clone:
   depth: 1
 kind: pipeline
-name: bullseye amd64 build
+name: buster amd64 build
 platform:
   os: linux
 pull: always
 steps:
 - commands:
-  - ./ci/scripts/build.sh bullseye debian amd64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/build.sh buster debian amd64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: build
   when:
     event:
     - push
 - commands:
-  - ./ci/scripts/build.sh bullseye debian amd64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/build.sh buster debian amd64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: release
   when:
     event:
     - tag
 - commands:
-  - ./ci/scripts/publish.sh bullseye debian amd64 100.0.0+${DRONE_COMMIT_SHA:0:8}
-    ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/publish.sh buster debian amd64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: copy build
   volumes:
@@ -147,7 +145,7 @@ steps:
     event:
     - push
 - commands:
-  - ./ci/scripts/publish.sh bullseye debian amd64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/publish.sh buster debian amd64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: copy relase
   volumes:
@@ -173,29 +171,28 @@ volumes:
 clone:
   depth: 1
 kind: pipeline
-name: bullseye arm64 build
+name: buster arm64 build
 platform:
   arch: arm64
   os: linux
 pull: always
 steps:
 - commands:
-  - ./ci/scripts/build.sh bullseye debian arm64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/build.sh buster debian arm64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: build
   when:
     event:
     - push
 - commands:
-  - ./ci/scripts/build.sh bullseye debian arm64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/build.sh buster debian arm64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: release
   when:
     event:
     - tag
 - commands:
-  - ./ci/scripts/publish.sh bullseye debian arm64 100.0.0+${DRONE_COMMIT_SHA:0:8}
-    ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/publish.sh buster debian arm64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: copy build
   volumes:
@@ -205,7 +202,7 @@ steps:
     event:
     - push
 - commands:
-  - ./ci/scripts/publish.sh bullseye debian arm64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/publish.sh buster debian arm64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: copy relase
   volumes:
@@ -231,18 +228,18 @@ volumes:
 clone:
   depth: 1
 depends_on:
-- bullseye 386 build
-- bullseye armv7 build
-- bullseye amd64 build
-- bullseye arm64 build
+- buster 386 build
+- buster armv7 build
+- buster amd64 build
+- buster arm64 build
 kind: pipeline
-name: bullseye index
+name: buster index
 platform:
   os: linux
 pull: always
 steps:
 - commands:
-  - /usr/local/bin/index zerotier-builds debian bullseye 386 armv7 amd64 arm64
+  - /usr/local/bin/index zerotier-builds debian buster 386 armv7 amd64 arm64
   environment:
     GPG_PRIVATE_KEY:
       from_secret: gpg-private-key
@@ -255,7 +252,7 @@ steps:
     event:
     - push
 - commands:
-  - /usr/local/bin/index zerotier-releases debian bullseye 386 armv7 amd64 arm64
+  - /usr/local/bin/index zerotier-releases debian buster 386 armv7 amd64 arm64
   environment:
     GPG_PRIVATE_KEY:
       from_secret: gpg-private-key
@@ -284,15 +281,15 @@ volumes:
 clone:
   depth: 1
 depends_on:
-- bullseye index
+- buster index
 kind: pipeline
-name: bullseye 386 test
+name: buster 386 test
 platform:
   os: linux
 pull: always
 steps:
 - commands:
-  - ./ci/scripts/test.sh bullseye debian 386 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/test.sh buster debian 386 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: test build
   volumes:
@@ -302,7 +299,7 @@ steps:
     event:
     - push
 - commands:
-  - ./ci/scripts/test.sh bullseye debian 386 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/test.sh buster debian 386 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: test release
   volumes:
@@ -328,16 +325,16 @@ volumes:
 clone:
   depth: 1
 depends_on:
-- bullseye index
+- buster index
 kind: pipeline
-name: bullseye armv7 test
+name: buster armv7 test
 platform:
   arch: arm64
   os: linux
 pull: always
 steps:
 - commands:
-  - ./ci/scripts/test.sh bullseye debian armv7 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/test.sh buster debian armv7 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: test build
   volumes:
@@ -347,7 +344,7 @@ steps:
     event:
     - push
 - commands:
-  - ./ci/scripts/test.sh bullseye debian armv7 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/test.sh buster debian armv7 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: test release
   volumes:
@@ -373,15 +370,15 @@ volumes:
 clone:
   depth: 1
 depends_on:
-- bullseye index
+- buster index
 kind: pipeline
-name: bullseye amd64 test
+name: buster amd64 test
 platform:
   os: linux
 pull: always
 steps:
 - commands:
-  - ./ci/scripts/test.sh bullseye debian amd64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/test.sh buster debian amd64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: test build
   volumes:
@@ -391,7 +388,7 @@ steps:
     event:
     - push
 - commands:
-  - ./ci/scripts/test.sh bullseye debian amd64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/test.sh buster debian amd64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: test release
   volumes:
@@ -417,16 +414,16 @@ volumes:
 clone:
   depth: 1
 depends_on:
-- bullseye index
+- buster index
 kind: pipeline
-name: bullseye arm64 test
+name: buster arm64 test
 platform:
   arch: arm64
   os: linux
 pull: always
 steps:
 - commands:
-  - ./ci/scripts/test.sh bullseye debian arm64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/test.sh buster debian arm64 100.0.0+${DRONE_COMMIT_SHA:0:8} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: test build
   volumes:
@@ -436,7 +433,7 @@ steps:
     event:
     - push
 - commands:
-  - ./ci/scripts/test.sh bullseye debian arm64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
+  - ./ci/scripts/test.sh buster debian arm64 ${DRONE_TAG} ${DRONE_BUILD_EVENT}
   image: 084037375216.dkr.ecr.us-east-2.amazonaws.com/honda-builder
   name: test release
   volumes:
@@ -460,6 +457,6 @@ volumes:
   name: zerotier-releases
 ---
 kind: signature
-hmac: 887a3ef78d3fe8f0149911e1e4876401dd7dd313b36eb893e791fa42f45d7768
+hmac: b5682c0bf86250616c7ae236c7a78f3b7d8012635e36db093cb71f7fe590a38e
 
 ...
